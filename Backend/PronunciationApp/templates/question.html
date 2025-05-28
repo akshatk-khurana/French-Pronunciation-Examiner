@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}
+Add Question
+{% endblock %}
+
+{% block content %}
+    <h1>{{ action }} Question</h1>    
+
+    <form action="" method="POST">
+        {% csrf_token %}
+
+        <div class="form-group">
+            <label for="email">Question:</label>
+            <input type="text" class="form-control" name="question" maxlength="1024" value="{{ question }}">
+        </div>
+        <br>
+        <div class="form-group">
+            <label for="pwd">Response:</label>
+            <textarea type="text" maxlength="2048" class="form-control" name="response" placeholder="Je m'appelle {{ name }}...">{{ response }}</textarea>
+        </div>
+        <br>
+        <button type="submit" class="btn btn-primary">Save</button>
+    </form>
+    
+{% endblock %}

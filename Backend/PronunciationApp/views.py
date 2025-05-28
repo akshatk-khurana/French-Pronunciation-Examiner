@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import login, logout, authenticate
-from .models import Student
+from .models import Student, Question
 from django.contrib.auth.models import User
 from .helpers import *
 
@@ -63,3 +63,63 @@ def signup(request):
 def portfolio(request):
     if not request.user.is_authenticated:
         return redirect('login')
+    else:
+        student = request.user.student
+        questions = list(student.questions.all())
+
+        return render(request, "portfolio.html", {
+            'authenticated': request.user.is_authenticated,
+            'name': request.user.first_name,    
+            'questions': questions
+        })
+    
+def question(request, action, id=None):
+    if request.user.is_authenticated:
+        if request.method == "POST":
+            if action == "create":
+                question = request.POST["question"].strip()
+                response = request.POST["response"].strip()
+                
+                new_question = Question(
+                    student=request.user.student,
+                    question=question,
+                    response=response
+                )
+
+                new_question.save()
+
+            elif action == "edit":
+                question = request.POST["question"].strip()
+                response = request.POST["response"].strip()
+
+                question_to_edit = Question.objects.get(id=id, student=request.user.student)
+                question_to_edit.question = question
+                question_to_edit.response = response
+
+                question_to_edit.save()
+
+            elif action == "delete":
+                question = Question.objects.get(id=id, student=request.user.student)
+                question.delete()
+
+            return redirect('portfolio')
+        elif request.method == "GET":
+            if action == "edit":
+                question = Question.objects.get(id=id, student=request.user.student)
+
+                return render(request, "question.html", {
+                    'authenticated': True,
+                    'name': request.user.first_name,
+                    'question': question.question,
+                    'response': question.response,
+                    'action': "Edit",
+                })
+
+            else:
+                return render(request, "question.html", {
+                    'authenticated': True,
+                    'name': request.user.first_name,
+                    'question': '',
+                    'response': '',
+                    'action': "Add",
+                })

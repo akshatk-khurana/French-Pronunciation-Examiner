@@ -6,4 +6,5 @@ urlpatterns = [
     path("logout/", views.logout_view, name="logout"),
     path("signup/", views.signup, name="signup"),
     path("", views.portfolio, name="portfolio"),
+    re_path(r"^question/(?P<action>\w+)(?:/(?P<id>\d+))?/$", views.question, name="question"),
 ]

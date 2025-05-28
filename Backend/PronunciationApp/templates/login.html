@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %} Login {% endblock %}
+
+{% block content %}
+
+<h1>Login</h1><br>
+
+{% if error == True %}
+    <div class="alert alert-danger">
+        {{ message }}
+    </div>
+{% endif %}
+
+<form action="" method="POST">
+
+    {% csrf_token %}
+
+    <div class="form-group">
+      <label for="email">Username:</label>
+      <input type="text" class="form-control" name="username" value="akk" maxlength="32">
+    </div>
+    <br>
+    <div class="form-group">
+      <label for="pwd">Password:</label>
+      <input type="password" class="form-control" name="password" value="1" maxlength="8"">
+    </div>
+    <br>    
+    <a href="/signup">Sign up</a><br><br>
+    <button type="submit" class="btn btn-primary">Submit</button>
+</form>
+
+{% endblock %}

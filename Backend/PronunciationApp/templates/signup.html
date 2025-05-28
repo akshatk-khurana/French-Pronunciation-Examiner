@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %} Sign Up {% endblock %}
+
+{% block content %}
+
+{% if message %}
+    <div class="alert alert-warning">
+        {{ message }}
+    </div>
+{% endif %}
+
+<h1>Sign Up</h1><br>
+<form action="" method="POST">
+  
+    {% csrf_token %}
+
+    <div class="form-group">
+      <label for="firstname">First name:</label>
+      <input type="text" class="form-control" name="firstname" maxlength="32">
+    </div>
+    <br>
+    <div class="form-group">
+      <label for="username">Username:</label>
+      <input type="text" class="form-control" name="username" maxlength="32">
+    </div>
+    <br>
+    <div class="form-group">
+      <label for="pwd">Password:</label>
+      <input type="password" class="form-control" name="password" maxlength="8">
+    </div>
+    <br>
+    <div class="form-group">
+      <label for="pwd">HSC French Course:</label>
+      <select class="form-select" name="course">
+        <option selected value="Beginners">Beginners</option>
+        <option value="Continuers">Continuers</option>
+      </select>
+    </div>
+    <br>
+    <button type="submit" class="btn btn-warning">Submit</button>
+</form>
+
+{% endblock %}

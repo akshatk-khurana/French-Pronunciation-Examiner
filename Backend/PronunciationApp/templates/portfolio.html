@@ -5,25 +5,25 @@ My Portfolio
 {% endblock %}
 
 {% block content %}
-    <h1>{{ name }}'s Speaking Portfolio</h1><br> 
-
     <div class="container">
+        <h1>{{ name }}'s Speaking Portfolio</h1>
         {% for question in questions %}
-            <div class="question bg-warning">
+            <div class="question bg-light">
                 <div><strong>{{ question.question }}</strong></div>
                 <div>{{ question.response }}</div><br>
-
+                
+                <a href="/question/edit/{{ question.id }}/"><button class="btn btn-primary">Edit</button><a></a>
+                <br><br>
                 <form action="/question/delete/{{ question.id }}/" method="POST">
                     {% csrf_token %}
-                    <button type="submit" class="btn btn-primary">Delete</button>
-                </form><br>
-                <a href="/question/edit/{{ question.id }}/"><button class="btn btn-primary">Edit</button><a></a>
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
             </div>
             <br>
         {% empty %}
             <div>No questions in portfolio.</div>
         {% endfor %}
+        <br>
+        <a href="/question/create/"><button class="btn btn-primary">Add Question</button></a>
     </div>
-    <br>
-    <a href="/question/create/"><button class="btn btn-primary">Add Question</button><a>
 {% endblock %}

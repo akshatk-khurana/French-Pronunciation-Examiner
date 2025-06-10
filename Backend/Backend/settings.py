@@ -84,4 +84,7 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+PRONUNCIATION_AUDIO_URL = '/pronunciations/'
+PRONUNCIATION_AUDIO_ROOT = BASE_DIR / 'PronunciationApp' / 'pronunciations'
+
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

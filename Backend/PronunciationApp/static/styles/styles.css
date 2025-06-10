@@ -1,0 +1,20 @@
+* {
+    user-select: none;
+}
+
+#pronounce-question {
+    cursor: pointer; 
+}
+
+#words > strong:hover {
+    cursor: pointer; 
+}
+
+.question {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: #f9fafb;
+    padding: 16px;
+    margin-bottom: 18px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}

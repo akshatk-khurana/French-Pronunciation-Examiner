@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+Practice
+{% endblock %}
+
+{% block content %}
+    <div class="alert alert-danger" id="error" hidden></div>
+    <h1>Practice Session</h1>    
+    <h2>Chosen question: 
+        <span id="pronounce-question">{{ question.question }}</span>
+    </h2>
+    <br>
+    
+    <div id="words">
+        {% for word in response %}
+            <strong id="{{ forloop.counter0 }}">{{ word }}</strong>
+        {% endfor %}
+    </div>
+    <input type="text" id="question" value="{{ question.question }}" hidden>
+    <input type="text" id="response" value="{{ question.response }}" hidden>
+    <div class="mt-3" id="main">
+        <button type="button" class="btn btn-primary me-2" id="begin-btn">Begin</button>
+        <button type="button" class="btn btn-primary" id="pause-btn">Pause</button>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/practice.js' %}"></script>
+{% endblock %}

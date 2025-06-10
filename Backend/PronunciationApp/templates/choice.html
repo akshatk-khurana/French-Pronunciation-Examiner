@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}
+Practice
+{% endblock %}
+
+{% block content %}
+    <h1>Start Practice Session</h1>    
+
+    <form action="" method="POST">
+        {% csrf_token %}
+        <div class="form-group">
+            <select class="form-select" name="chosen_question">
+                {% for question in questions %}
+                    <option value="{{ question.id }}">{{ question.question }}</option>
+                {% endfor %}
+            </select><br>
+            <button type="submit" class="btn btn-primary">Practice Question</button>
+        </div>
+    </form>
+{% endblock %}

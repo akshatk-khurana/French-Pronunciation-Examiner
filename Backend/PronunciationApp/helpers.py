@@ -3,14 +3,31 @@ import torch
 import os
 from .snn import SiameseNetwork
 
-harmful_characters = ["<", ">", "?", "!"]
+numbers = "0123456789"
 
-def sanitise(s):
-    s = s.strip()
-    for char in harmful_characters:
-        s = s.replace(char, "")
-    
-    return s
+def validate_password(password):
+    error = ""
+    valid = True
+
+    if password.isalnum():
+        has_number = False
+        for i in password:
+            if i in numbers:
+                has_number = True
+        
+        if not has_number:
+            error = "Please include at least one number in your password."
+            valid = False
+    else:
+        error = "Password can only include numbers and letters."
+        valid = False
+        
+    return (valid, error)
+
+def validate_username(username):
+    if username.isalpha():
+        return (True, "")
+    return (False, "Username can only contain letters.")
 
 def convert_to_mp3(input_path, output_path):   
     subprocess.run(

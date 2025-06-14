@@ -11,8 +11,8 @@ from django.conf import settings
 
 def login_view(request):
     if request.method == "POST":
-        username = sanitise(request.POST["username"])
-        password = sanitise(request.POST["password"])
+        username = request.POST["username"]
+        password = request.POST["password"]
 
         user = authenticate(request, username=username, password=password)
 
@@ -36,9 +36,25 @@ def logout_view(request):
 
 def signup(request):
     if request.method == "POST":
-        firstname = sanitise(request.POST["firstname"])
-        username = sanitise(request.POST["username"])
-        password = sanitise(request.POST["password"])
+        firstname = request.POST["firstname"]
+        username = request.POST["username"]
+        password = request.POST["password"]
+
+        username_is_valid = validate_username(username)
+        password_is_valid = validate_password(password)
+
+        if username_is_valid[0] != True:
+            return render(request, "signup.html", {
+                'authenticated': False,
+                'message': username_is_valid[1],
+            })
+        
+        if password_is_valid[0] != True:
+            return render(request, "signup.html", {
+                'authenticated': False,
+                'message': password_is_valid[1],
+            })
+
         course = request.POST["course"]
 
         if not User.objects.filter(username=username).exists():

@@ -1,20 +1,17 @@
 const beginBtn = document.getElementById('begin-btn');
 const pauseBtn = document.getElementById('pause-btn');
-const mainDiv = document.getElementById('main');
-const wordDiv = document.getElementById('words');
 const pronounceDiv = document.getElementById('pronounce-question');
+const wordDiv = document.getElementById('words');
 const individualWordDivs = wordDiv.children;
 
-const question = document.getElementById('question').value
+const question = document.getElementById('question').value;
 const response = document.getElementById('response').value;
-
-let SILENCE_DELAY = 1000;
-let speaking = false;
 
 const responseArray = response.split(" ");
 let wordCursor = 0;
-
 let currentAudio = null;
+let speaking = false;
+let SILENCE_DELAY = 1000;
 
 pronounceDiv.addEventListener("click", () => {
   stopPreviousAudio();
@@ -38,65 +35,88 @@ Array.from(individualWordDivs).forEach(word => {
 });
 
 if (navigator.mediaDevices.getUserMedia) {
-  console.log("The mediaDevices.getUserMedia() method is supported.");
+  navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+    const audioContext = new AudioContext();
+    const source = audioContext.createMediaStreamSource(stream);
+    const analyser = audioContext.createAnalyser();
+    analyser.fftSize = 2048;
+    source.connect(analyser);
+    const dataArray = new Uint8Array(analyser.fftSize);
+    const silenceTimeoutRef = { current: null };
 
-  const constraints = { audio: true };
-  let chunks = [];
-  let mediaRecorder = null;
+    const recorder = new MediaRecorder(stream);
+    let chunks = [];
 
-  let onSuccess = function (stream) {
-    mediaRecorder = new MediaRecorder(stream);
-
-    const detectSilenceRunner = setupSilenceDetection(stream, mediaRecorder);
-
-    beginBtn.addEventListener("click", () => {
-      speaking = true;
-      SILENCE_DELAY -= 900;
-
-      mediaRecorder.start();
-      requestAnimationFrame(detectSilenceRunner);
-    });
-
-    pauseBtn.addEventListener("click", () => {
-      speaking = false;
-      
-      if (mediaRecorder.state === "recording") {
-        mediaRecorder.stop();
+    const detectSilence = () => {
+      analyser.getByteTimeDomainData(dataArray);
+      let sum = 0;
+      for (let i = 0; i < dataArray.length; i++) {
+        const val = (dataArray[i] - 128) / 128;
+        sum += val * val;
       }
-    });
+      const rms = Math.sqrt(sum / dataArray.length);
 
-    mediaRecorder.ondataavailable = function (e) {
-      chunks.push(e.data);
+      if (recorder.state === "recording") {
+        if (rms < 0.015) {
+          if (!silenceTimeoutRef.current) {
+            silenceTimeoutRef.current = setTimeout(() => {
+              if (recorder.state === "recording") {
+                recorder.stop();
+              }
+            }, SILENCE_DELAY);
+          }
+        } else {
+          if (silenceTimeoutRef.current) {
+            clearTimeout(silenceTimeoutRef.current);
+            silenceTimeoutRef.current = null;
+          }
+        }
+        requestAnimationFrame(detectSilence);
+      }
     };
 
-    mediaRecorder.onstop = async function () {
-      
-      const blob = new Blob(chunks, { type: 'audio/webm' });
-      let pronunciationScore = await scoreAudio(blob);
+    recorder.ondataavailable = e => chunks.push(e.data);
 
-      if (pronunciationScore === "OK") {
-        console.log("Score received")
+    recorder.onstop = async () => {
+      const blob = new Blob(chunks, { type: 'audio/webm' });
+      const score = await scoreAudio(blob);
+
+      if (score === "OK") {
         getCurrentWordDiv().classList.add("text-warning");
       }
 
       chunks = [];
       wordCursor++;
 
-      console.log(speaking);
-      if (speaking == true) {
-        mediaRecorder.start();
-        requestAnimationFrame(detectSilenceRunner);
+      if (speaking) {
+        recorder.start();
+        setTimeout(() => {
+          requestAnimationFrame(detectSilence);
+        }, 500);
       }
     };
-  };
 
-  let onError = function (err) {
-    console.log("The following error occured: " + err);
-  };
+    beginBtn.addEventListener("click", () => {
+      speaking = true;
+      chunks = [];
+      recorder.start();
+      setTimeout(() => {
+        requestAnimationFrame(detectSilence);
+      }, 500);
+    });
 
-  navigator.mediaDevices.getUserMedia(constraints).then(onSuccess, onError);
+    pauseBtn.addEventListener("click", () => {
+      speaking = false;
+      if (recorder.state === "recording") {
+        recorder.stop();
+      }
+    });
+
+  }).catch(err => {
+    console.error("Mic error:", err);
+  });
 } else {
-  console.log("MediaDevices.getUserMedia() not supported on your browser!");
+  console.log("getUserMedia not supported.");
 }
 
 function getCurrentWordDiv() {
@@ -110,7 +130,6 @@ function getCurrentWord() {
 async function scoreAudio(blob) {
   const file = new File([blob], 'recording.webm', { type: 'audio/webm' });
   const formData = new FormData();
-
   formData.append('audio', file);
   formData.append('word', getCurrentWord());
 
@@ -123,63 +142,12 @@ async function scoreAudio(blob) {
   return data["score"];
 }
 
-function calculateRMS(dataArray) {
-  let sum = 0;
-  for (let i = 0; i < dataArray.length; i++) {
-    let val = (dataArray[i] - 128) / 128;
-    sum += val * val;
-  }
-  return Math.sqrt(sum / dataArray.length);
-}
-
-function detectSilence(analyser, dataArray, mediaRecorder, silenceTimeoutRef, SILENCE_DELAY = 1500) {
-  analyser.getByteTimeDomainData(dataArray);
-
-  let rms = calculateRMS(dataArray);
-
-  if (mediaRecorder.state === "recording") {
-    if (rms < 0.01) {
-      if (!silenceTimeoutRef.current) {
-        silenceTimeoutRef.current = setTimeout(() => {
-          if (mediaRecorder.state === "recording") {
-            mediaRecorder.stop();
-            console.log("Recorder stopped due to silence.");
-          }
-        }, SILENCE_DELAY);
-      }
-    } else {
-      if (silenceTimeoutRef.current) {
-        clearTimeout(silenceTimeoutRef.current);
-        silenceTimeoutRef.current = null;
-      }
-    }
-    requestAnimationFrame(() => detectSilence(analyser, dataArray, mediaRecorder, silenceTimeoutRef, SILENCE_DELAY));
-  }
-}
-
-function setupSilenceDetection(stream, mediaRecorder) {
-  const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-  const mediaStreamSource = audioContext.createMediaStreamSource(stream);
-  const analyser = audioContext.createAnalyser();
-  analyser.fftSize = 2048;
-  mediaStreamSource.connect(analyser);
-  const dataArray = new Uint8Array(analyser.fftSize);
-
-  const silenceTimeoutRef = { current: null };
-
-  return () => detectSilence(analyser, dataArray, mediaRecorder, silenceTimeoutRef, SILENCE_DELAY);
-}
-
 function pronouncePhrase(phrase) {
   fetch(`/pronounce/${encodeURIComponent(phrase)}/`)
-    .then(response => response.json())
+    .then(res => res.json())
     .then(data => {
       currentAudio = new Audio(data.audio_url);
       currentAudio.play();
-      console.log('Received pronunciation audio for:', data.phrase);
-    })
-    .catch(error => {
-      console.error('Error fetching pronunciation:', error);
     });
 }
 

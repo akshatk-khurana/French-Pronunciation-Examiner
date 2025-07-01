@@ -1,7 +1,6 @@
-import subprocess
-import torch
-import os
-from .snn import SiameseNetwork
+import subprocess, os
+from django.conf import settings
+from gtts import gTTS
 
 numbers = "0123456789"
 
@@ -36,3 +35,11 @@ def convert_to_mp3(input_path, output_path):
             "-b:a", "192k", "-y", output_path
         ],
     )
+
+def get_standard_pronunciation(word):
+    audio_dir = os.path.join(settings.BASE_DIR, "PronunciationApp", "audio")
+
+    output_path = os.path.join(audio_dir, "spoken.mp3")
+
+    tts = gTTS(word, lang='fr', slow=False)
+    tts.save(output_path)

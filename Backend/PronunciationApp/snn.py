@@ -1,8 +1,8 @@
 import torch.nn as nn
-import torch.optim as optim
 import torch
 import torch.nn.functional as F
-import torch.utils.data
+import librosa
+import numpy as np
 
 class SiameseNetwork(nn.Module):
   def __init__(self):
@@ -46,12 +46,7 @@ class SiameseNetwork(nn.Module):
 
     self.sigmoid = nn.Sigmoid()
 
-    self.feature_similarity = nn.Sequential(
-        nn.ReLU(inplace=True),
-        nn.Linear(6688, 1),
-    )
-
-    self.sigmoid = nn.Sigmoid()
+    self.feature_similarity = nn.Linear(6688, 1)
 
   def get_feature_vector(self, x):
       x = self.conv1(x)
@@ -74,3 +69,27 @@ class SiameseNetwork(nn.Module):
     similarity = self.sigmoid(features)
 
     return similarity
+
+def pad_or_trim(mel_tensor, target_width):
+    _, mel_bands, time_steps = mel_tensor.shape
+    if time_steps > target_width:
+        mel_tensor = mel_tensor[:, :, :target_width]
+    elif time_steps < target_width:
+        pad_amount = target_width - time_steps
+        mel_tensor = F.pad(mel_tensor, (0, pad_amount))
+    return mel_tensor
+
+def load_and_process(path):
+    y, sr = librosa.load(path, sr=22050)
+    y, _ = librosa.effects.trim(y, top_db=15 )
+
+    mel = librosa.feature.melspectrogram(y=y, sr=sr, n_mels=128, hop_length=512, n_fft=1024)
+    mel = librosa.power_to_db(mel, ref=np.max)
+
+    mel = (mel - mel.min()) / (mel.max() - mel.min())
+
+    mel_tensor = torch.tensor(mel).unsqueeze(0) # (1, 1, 128, time)
+
+    mel_tensor = pad_or_trim(mel_tensor, 64)
+
+    return mel_tensor

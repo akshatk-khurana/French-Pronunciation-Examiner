@@ -1,13 +1,16 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import login, logout, authenticate
-from .models import Student, Question
 from django.contrib.auth.models import User
-from gtts import gTTS
-from .helpers import *
+from django.conf import settings
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+
 import os
-from django.conf import settings
+from gtts import gTTS
+
+from .helpers import *
+from .SNN import *
+from .models import Student, Question
 
 def login_view(request):
     if request.method == "POST":
@@ -177,15 +180,15 @@ def score_pronunciation(request):
     if request.method == "POST":
         audio_file = request.FILES.get('audio')
         word_spoken = request.POST["word"]
+        print(word_spoken)
 
         if audio_file:
-            print("Audio file received!")
-
             audio_dir = os.path.join(settings.BASE_DIR, "PronunciationApp", "audio")
+            
             os.makedirs(audio_dir, exist_ok=True)
 
             file_path = os.path.join(audio_dir, audio_file.name)
-            output_path = os.path.join(audio_dir, "recording.mp3")
+            output_path = os.path.join(audio_dir, "human.mp3")
 
             with open(file_path, 'wb+') as destination:
                 for chunk in audio_file.chunks():
@@ -196,12 +199,29 @@ def score_pronunciation(request):
 
             convert_to_mp3(file_path, output_path)
 
-            # print(word_spoken)
+            get_standard_pronunciation(word_spoken)
 
-            score = "OK" # TO-DO
-            # Remove file once processed.
+            processed_spoken = load_and_process(output_path)
 
-            print("Returning score")
+            standard_path = os.path.join(audio_dir, "spoken.mp3")
+            processed_standard = load_and_process(standard_path)
+
+            processed_standard = processed_standard.to(dtype=torch.float32)
+            processed_spoken = processed_spoken.to(dtype=torch.float32)
+            
+            models_dir = os.path.join(settings.BASE_DIR, "PronunciationApp", "models")
+            saved_model_path = os.path.join(models_dir, "0.1474_Model.pth")
+
+            model = SiameseNetwork()
+            model.load_state_dict(torch.load(saved_model_path, map_location='cpu'))
+            model.eval()
+
+            with torch.no_grad():
+                output = model(processed_standard, processed_spoken)
+                print(output)
+
+            score = None
+
             return JsonResponse(
                 {
                     "success": True, 
@@ -216,7 +236,7 @@ def score_pronunciation(request):
 def get_pronunciation(request, phrase):
     audio_dir = settings.PRONUNCIATION_AUDIO_ROOT
     os.makedirs(audio_dir, exist_ok=True)
-    filename = f"tts_{phrase.replace(' ', '_').replace('?', '')}.mp3"
+    filename = f"{phrase.replace(' ', '_').replace('?', '')}.mp3"
     file_path = os.path.join(audio_dir, filename)
 
     if not os.path.exists(file_path):

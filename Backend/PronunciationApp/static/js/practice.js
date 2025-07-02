@@ -1,3 +1,8 @@
+/**
+ * Handles logic for the practice session functionality including audio recording,
+ * silence detection, word-by-word feedback, and playback of correct pronunciations.
+ */
+
 const beginBtn = document.getElementById('begin-btn');
 const pauseBtn = document.getElementById('pause-btn');
 const pronounceDiv = document.getElementById('pronounce-question');
@@ -11,7 +16,8 @@ const responseArray = response.split(" ");
 let wordCursor = 0;
 let currentAudio = null;
 let speaking = false;
-let SILENCE_DELAY = 1000;
+
+let SILENCE_DELAY = 1000; // The duration for silence between words ()
 
 pronounceDiv.addEventListener("click", () => {
   stopPreviousAudio();
@@ -39,7 +45,7 @@ if (navigator.mediaDevices.getUserMedia) {
     const audioContext = new AudioContext();
     const source = audioContext.createMediaStreamSource(stream);
     const analyser = audioContext.createAnalyser();
-    analyser.fftSize = 2048;
+    analyser.fftSize = 1024;
     source.connect(analyser);
     const dataArray = new Uint8Array(analyser.fftSize);
     const silenceTimeoutRef = { current: null };
@@ -83,6 +89,10 @@ if (navigator.mediaDevices.getUserMedia) {
 
       if (score === "OK") {
         getCurrentWordDiv().classList.add("text-warning");
+      } else if (score === "Good") {
+        getCurrentWordDiv().classList.add("text-success");
+      } else if (score === "Bad") {
+        getCurrentWordDiv().classList.add("text-danger");
       }
 
       chunks = [];
@@ -119,14 +129,23 @@ if (navigator.mediaDevices.getUserMedia) {
   console.log("getUserMedia not supported.");
 }
 
+/**
+ * Returns the DOM element for the current word being practiced.
+ */
 function getCurrentWordDiv() {
   return document.getElementById(String(wordCursor));
 }
 
+/**
+ * Returns the text of the current word being practiced.
+ */
 function getCurrentWord() {
   return document.getElementById(String(wordCursor)).innerHTML;
 }
 
+/**
+ * Sends the recorded audio blob to the backend for scoring.
+ */
 async function scoreAudio(blob) {
   const file = new File([blob], 'recording.webm', { type: 'audio/webm' });
   const formData = new FormData();
@@ -142,6 +161,9 @@ async function scoreAudio(blob) {
   return data["score"];
 }
 
+/**
+ * Retrieves and plays the pronunciation audio for a given phrase.
+ */
 function pronouncePhrase(phrase) {
   fetch(`/pronounce/${encodeURIComponent(phrase)}/`)
     .then(res => res.json())
@@ -151,6 +173,9 @@ function pronouncePhrase(phrase) {
     });
 }
 
+/**
+ * Stops any currently playing audio to avoid overlapping sounds.
+ */
 function stopPreviousAudio() {
   if (currentAudio) {
     currentAudio.pause();

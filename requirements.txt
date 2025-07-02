@@ -1,0 +1,8 @@
+Django>=3.2
+numpy
+librosa
+torch
+torchaudio
+gtts
+pydub
+whisper

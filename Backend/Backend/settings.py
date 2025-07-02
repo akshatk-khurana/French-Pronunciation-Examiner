@@ -1,5 +1,5 @@
 """
-Django settings for Backend project.
+Includes all project settings to be referenced by other files.
 """
 
 from pathlib import Path

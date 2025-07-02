@@ -1,3 +1,9 @@
+"""This file contains all the endpoints for the web application.
+
+Each of these view functions is associated with a specific URL in urls.py, 
+and are run when the respective URL endpoint is accessed.
+"""
+
 from django.shortcuts import render, redirect
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.models import User
@@ -13,6 +19,14 @@ from .SNN import *
 from .models import Student, Question
 
 def login_view(request):
+    """Handle all user attempts to login to the application and redirect when necessary.
+
+    Args:
+        request: HttpRequest object containing request metadata.
+    
+    Returns:
+        HttpResponse: Renders the login page or redirects to the portfolio if authenticated.
+    """
     if request.method == "POST":
         username = request.POST["username"]
         password = request.POST["password"]
@@ -34,10 +48,26 @@ def login_view(request):
         })
     
 def logout_view(request):
+    """Log out the current user and redirect to login page.
+
+    Args:
+        request: HttpRequest object containing request metadata.
+    
+    Returns:
+        HttpResponse: Redirects to the login page.
+    """
     logout(request)
     return redirect('login')
 
 def signup(request):
+    """Handle user signup. Validate and create new user accounts.
+
+    Args:
+        request: HttpRequest object containing request metadata.
+    
+    Returns:
+        HttpResponse: Renders the signup page or redirects to login after successful signup.
+    """
     if request.method == "POST":
         firstname = request.POST["firstname"]
         username = request.POST["username"]
@@ -85,6 +115,14 @@ def signup(request):
         return render(request, "signup.html", {'authenticated': False})
 
 def portfolio(request):
+    """Display the user's portfolio of questions if authenticated.
+
+    Args:
+        request:  HttpRequest object containing request metadata.
+    
+    Returns:
+        HttpResponse: Renders the portfolio page or redirects to the login page.
+    """
     if not request.user.is_authenticated:
         return redirect('login')
     else:
@@ -98,9 +136,21 @@ def portfolio(request):
         })
     
 def question(request, action, id=None):
+    """Create, edit, or delete a question for the authenticated user.
+
+    Args:
+        request: HttpRequest object containing request metadata.
+        action: A string of the action to perform: 'create', 'edit', or 'delete'.
+        id: The integer ID of the question if editing or deleting.
+    
+    Returns:
+        HttpResponse: Redirects to portfolio or renders a question creation form.
+    """
     if request.user.is_authenticated:
         if request.method == "POST":
             if action == "create":
+
+                # Ensure any unneccesary whitespace is removed.
                 question = request.POST["question"].strip()
                 response = request.POST["response"].strip()
                 
@@ -149,6 +199,14 @@ def question(request, action, id=None):
                 })
             
 def choice(request):
+    """Allow user to select a question to practice from their portfolio.
+
+    Args:
+        request: HttpRequest object containing request metadata.
+    
+    Returns:
+        HttpResponse: Renders the choice page or redirects to practice.
+    """
     if request.user.is_authenticated:
         if request.method == "POST":
             chosen_question_id = int(request.POST["chosen_question"])
@@ -163,6 +221,15 @@ def choice(request):
             })
 
 def practice(request, id):
+    """Render the practice page for a selected question.
+
+    Args:
+        request: HttpRequest object containing request metadata.
+        id: The integer ID of the question to practice.
+    
+    Returns:
+        HttpResponse: Renders the practice page.
+    """
     if request.user.is_authenticated:
         if request.method == "GET":
             question = Question.objects.get(id=id, student=request.user.student)
@@ -177,6 +244,14 @@ def practice(request, id):
 
 @csrf_exempt
 def score_pronunciation(request):
+    """Receive browser audio, process it, and score the user's pronunciation using the Siamese neural network.
+
+    Args:
+        request: HttpRequest object containing request metadata.
+    
+    Returns:
+        JsonResponse: JSON response with the pronunciation score.
+    """
     if request.method == "POST":
         audio_file = request.FILES.get('audio')
         word_spoken = request.POST["word"]
@@ -234,9 +309,18 @@ def score_pronunciation(request):
         
 @csrf_exempt
 def get_pronunciation(request, phrase):
+    """Generate an audio file with correct pronunciation for the given French phrase.
+
+    Args:
+        request: HttpRequest object containing request metadata.
+        phrase (str): A string of the phrase to generate audio for.
+    
+    Returns:
+        JsonResponse: JSON response with the URL for correct pronunciation.
+    """
     audio_dir = settings.PRONUNCIATION_AUDIO_ROOT
     os.makedirs(audio_dir, exist_ok=True)
-    filename = f"{phrase.replace(' ', '_').replace('?', '')}.mp3"
+    filename = f"{phrase.replace(' ', '_').replace('?', '')}.mp3" # Prevent any issues with filenames
     file_path = os.path.join(audio_dir, filename)
 
     if not os.path.exists(file_path):

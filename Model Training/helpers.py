@@ -1,7 +1,11 @@
-import os
 from pydub import AudioSegment
+import os
 
 def rename_and_convert_files(folder):
+    """Rename all files in the folder to a standard format and convert them to .mp3 if needed.
+
+    Ignore .DS_Store files.
+    """
     counter = 0
     for filename in os.listdir(folder):
         if filename == '.DS_Store':

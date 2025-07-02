@@ -5,10 +5,6 @@ from gtts import gTTS
 from pydub import AudioSegment
 from pydub.playback import play
 
-def play_audio(path):
-    sound = AudioSegment.from_file(path)
-    play(sound)
-
 qualities = {"g": 1.00,
             "b": 0.00,
             "m": 0.5}
@@ -19,13 +15,18 @@ standard_destination_path = "Standard Samples"
 
 named_mp3_files = glob.glob(f"{named_folder_path}/*.mp3")
 
+def play_audio(path):
+    """Play an audio file at the given path using pydub."""
+    sound = AudioSegment.from_file(path)
+    play(sound)
+
 counter = None
 with open("similarity_labels.txt", "r", encoding="utf-8") as readingfile:
     lines = readingfile.readlines()
     last_row = lines[-1].strip()
     counter = int(last_row.split(" ")[0]) + 1
 
-# num | word | similarity
+# Populate the labels file with a record of each audio sample.
 with open("similarity_labels.txt", "a") as datafile:
     for f in named_mp3_files:
         f = f.split("/")[1]
@@ -70,39 +71,3 @@ with open("similarity_labels.txt", "a") as datafile:
         else:
             os.remove(full_path)
             print(f"Removed: {f}")
-
-
-# phrase_list = [
-#     "Bien sur",
-#     "Père",
-#     "À ma famille",
-#     "Fatigué",
-#     "Bonjour",
-#     "Oui",
-#     "Bonjour",
-#     "Alors",
-#     "Dernier",
-#     "Qu'est",
-#     "Ça va",
-#     "Dans",
-#     "Faire",
-#     "Aussi",
-#     "Toi",
-#     "Jour",
-#     "Travailler",
-#     "Famille",
-#     "Dans",
-#     "Que je",
-#     "Et",
-#     "Si j'aime",
-#     "Chaud",
-#     "Alors",
-#     "Mes devoirs",
-#     "Faire",
-#     "Pas",
-#     "Moi",
-#     "Puis",
-#     "Si",
-#     "Alors tu",
-#     "Mon boulot",
-# ]

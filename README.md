@@ -1,7 +1,11 @@
 # Écoute-Moi 
-A French pronunciation examiner for students studying French Beginners or Continuers to practice their speaking portfolio and receive real-time, word-by-word feedback.
+
+## Project Overview
+
+A French pronunciation examiner for students studying French Beginners or Continuers to store their speaking portfolio quewstionsm practice the questions from their portfolio and receive real-time, word-by-word feedback. NOTE: The  
 
 ## Features
+
 The core features of this application are:
 - An authentication system that allows users to securely access their speaking portfolio and logout once finished.
 - A portfolio page which gives users the ability to add, edit and delete existing questions, while viewing their speaking portfolio in its entirety.
